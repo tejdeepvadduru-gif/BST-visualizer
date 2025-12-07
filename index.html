@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binary Search Tree Visualizer</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+
+        :root {
+            --bg-color: #0f172a;
+            --panel-bg: #1e293b;
+            --header-bg: #1e293b;
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --accent-blue: #3b82f6;
+            --accent-emerald: #10b981;
+            --accent-red: #ef4444;
+            --input-bg: #020617;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        header {
+            background-color: var(--header-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .header-title h1 {
+            margin: 0;
+            font-size: 1.25rem;
+            color: var(--accent-blue);
+        }
+
+        .header-title p {
+            margin: 0;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .controls {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        input {
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            width: 80px;
+            font-family: inherit;
+        }
+
+        button {
+            border: none;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.25rem;
+            color: white;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.875rem;
+            transition: opacity 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .btn-insert { background-color: var(--accent-blue); }
+        .btn-find { background-color: var(--accent-emerald); }
+        .btn-random { background-color: #475569; }
+        .btn-clear { background-color: #7f1d1d; color: #fecaca; }
+        
+        .main-layout {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        aside {
+            width: 250px;
+            background-color: rgba(30, 41, 59, 0.5);
+            border-right: 1px solid var(--border-color);
+            padding: 1rem;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .section-title {
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .section-title:first-child { margin-top: 0; }
+
+        .status-box {
+            background-color: var(--input-bg);
+            padding: 0.75rem;
+            border-radius: 0.25rem;
+            border: 1px solid var(--border-color);
+            font-size: 0.875rem;
+            min-height: 60px;
+            color: #bfdbfe;
+        }
+
+        .status-box.error {
+            background-color: rgba(127, 29, 29, 0.2);
+            border-color: #991b1b;
+            color: #fecaca;
+        }
+
+        .status-box.success {
+            background-color: rgba(6, 78, 59, 0.2);
+            border-color: #065f46;
+            color: #a7f3d0;
+        }
+
+        .traversal-btns {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .btn-traverse {
+            background-color: #334155;
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem;
+            font-size: 0.75rem;
+        }
+
+        .traversal-output {
+            background-color: var(--input-bg);
+            padding: 0.75rem;
+            border-radius: 0.25rem;
+            border: 1px solid var(--border-color);
+            font-size: 0.75rem;
+            font-family: monospace;
+            color: #34d399;
+            min-height: 40px;
+            word-break: break-all;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.25rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .dot { width: 12px; height: 12px; border-radius: 50%; }
+        .dot-blue { background-color: var(--accent-blue); }
+        .dot-green { background-color: var(--accent-emerald); box-shadow: 0 0 5px rgba(16,185,129,0.5); }
+        .dot-yellow { background-color: #eab308; }
+
+        main {
+            flex: 1;
+            position: relative;
+            background-image: radial-gradient(#1e293b 1px, transparent 1px);
+            background-size: 20px 20px;
+            cursor: move;
+            overflow: hidden;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .floating-info {
+            position: absolute;
+            bottom: 1rem;
+            right: 1rem;
+            background-color: rgba(15, 23, 42, 0.9);
+            border: 1px solid var(--border-color);
+            padding: 0.75rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            pointer-events: none;
+        }
+        
+        .info-val { color: #93c5fd; }
+
+        @media (max-width: 768px) {
+            header { flex-direction: column; gap: 1rem; align-items: stretch; }
+            .header-title { text-align: center; }
+            .controls { justify-content: center; }
+            .main-layout { flex-direction: column; }
+            aside { width: 100%; height: 200px; border-right: none; border-bottom: 1px solid var(--border-color); }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-title">
+            <h1>BST Visualizer</h1>
+            <p>Data Structure Visualization</p>
+        </div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <input type="number" id="nodeValue" placeholder="Num" onkeydown="if(event.key==='Enter') insertNode()">
+                <button onclick="insertNode()" class="btn-insert">Insert</button>
+            </div>
+            
+            <div class="control-group">
+                <input type="number" id="searchValue" placeholder="Num" onkeydown="if(event.key==='Enter') searchNode()">
+                <button onclick="searchNode()" class="btn-find">Find</button>
+            </div>
+
+            <button onclick="generateRandom()" class="btn-random">Random</button>
+            <button onclick="clearTree()" class="btn-clear">Clear</button>
+        </div>
+    </header>
+
+    <div class="main-layout">
+        
+        <aside>
+            <div class="section-title">Status</div>
+            <div id="statusMessage" class="status-box">
+                Ready. Add a number to start.
+            </div>
+
+            <div class="section-title">Traversals</div>
+            <div class="traversal-btns">
+                <button onclick="traverse('inorder')" class="btn-traverse">
+                    <span>In-Order</span>
+                    <span style="color: #64748b">L-Root-R</span>
+                </button>
+                <button onclick="traverse('preorder')" class="btn-traverse">
+                    <span>Pre-Order</span>
+                    <span style="color: #64748b">Root-L-R</span>
+                </button>
+                <button onclick="traverse('postorder')" class="btn-traverse">
+                    <span>Post-Order</span>
+                    <span style="color: #64748b">L-R-Root</span>
+                </button>
+                <button onclick="traverse('bfs')" class="btn-traverse">
+                    <span>BFS (Level)</span>
+                    <span style="color: #64748b">Queue</span>
+                </button>
+            </div>
+
+            <div class="section-title">Traversal Output</div>
+            <div id="traversalOutput" class="traversal-output">...</div>
+            
+            <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
+                <div class="legend-item">
+                    <div class="dot dot-blue"></div>
+                    <span>Regular Node</span>
+                </div>
+                <div class="legend-item">
+                    <div class="dot dot-green"></div>
+                    <span>Found / New</span>
+                </div>
+                <div class="legend-item">
+                    <div class="dot dot-yellow"></div>
+                    <span>Visiting</span>
+                </div>
+            </div>
+        </aside>
+
+        <main id="mainContainer">
+            <canvas id="treeCanvas"></canvas>
+            
+            <div class="floating-info">
+                <p>Tree Height: <span id="treeHeight" class="info-val">0</span></p>
+                <p>Total Nodes: <span id="nodeCount" class="info-val">0</span></p>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        class Node {
+            constructor(value) {
+                this.value = value;
+                this.left = null;
+                this.right = null;
+                this.x = 0;
+                this.y = 0;
+            }
+        }
+
+        class BinarySearchTree {
+            constructor() {
+                this.root = null;
+                this.count = 0;
+            }
+
+            insert(value) {
+                const newNode = new Node(value);
+                if (this.root === null) {
+                    this.root = newNode;
+                    this.count++;
+                    return { success: true, path: [newNode] };
+                }
+                
+                let current = this.root;
+                let path = [current];
+
+                while (true) {
+                    if (value === current.value) return { success: false, path };
+                    
+                    if (value < current.value) {
+                        if (current.left === null) {
+                            current.left = newNode;
+                            this.count++;
+                            path.push(newNode);
+                            return { success: true, path };
+                        }
+                        current = current.left;
+                    } else {
+                        if (current.right === null) {
+                            current.right = newNode;
+                            this.count++;
+                            path.push(newNode);
+                            return { success: true, path };
+                        }
+                        current = current.right;
+                    }
+                    path.push(current);
+                }
+            }
+
+            find(value) {
+                if (!this.root) return { found: false, path: [] };
+                
+                let current = this.root;
+                let path = [current];
+                let found = false;
+                
+                while(current && !found) {
+                    if(value === current.value){
+                        found = true;
+                    } else if (value < current.value){
+                        current = current.left;
+                        if(current) path.push(current);
+                    } else {
+                        current = current.right;
+                        if(current) path.push(current);
+                    }
+                }
+                return { found, path };
+            }
+
+            getHeight(node = this.root) {
+                if (!node) return 0;
+                return 1 + Math.max(this.getHeight(node.left), this.getHeight(node.right));
+            }
+
+            bfs() {
+                let data = [];
+                let queue = [];
+                let node = this.root;
+                if(node) queue.push(node);
+
+                while(queue.length) {
+                    node = queue.shift();
+                    data.push(node.value);
+                    if(node.left) queue.push(node.left);
+                    if(node.right) queue.push(node.right);
+                }
+                return data;
+            }
+
+            dfsInOrder() {
+                let data = [];
+                function traverse(node) {
+                    if(node.left) traverse(node.left);
+                    data.push(node.value);
+                    if(node.right) traverse(node.right);
+                }
+                if(this.root) traverse(this.root);
+                return data;
+            }
+
+            dfsPreOrder() {
+                let data = [];
+                function traverse(node) {
+                    data.push(node.value);
+                    if(node.left) traverse(node.left);
+                    if(node.right) traverse(node.right);
+                }
+                if(this.root) traverse(this.root);
+                return data;
+            }
+
+            dfsPostOrder() {
+                let data = [];
+                function traverse(node) {
+                    if(node.left) traverse(node.left);
+                    if(node.right) traverse(node.right);
+                    data.push(node.value);
+                }
+                if(this.root) traverse(this.root);
+                return data;
+            }
+        }
+        
+        const canvas = document.getElementById('treeCanvas');
+        const ctx = canvas.getContext('2d');
+        const container = document.getElementById('mainContainer');
+        
+        let tree = new BinarySearchTree();
+        
+        let offsetX = 0;
+        let offsetY = 50;
+        let isDragging = false;
+        let startX, startY;
+        
+        const NODE_RADIUS = 20;
+        const LEVEL_HEIGHT = 70;
+        
+        let highlightedNodes = [];
+        let targetNode = null;
+        
+        function resizeCanvas() {
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            draw();
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function calculatePositions(node, depth, x, availableWidth) {
+            if (!node) return;
+            
+            node.x = x;
+            node.y = depth * LEVEL_HEIGHT;
+            
+            const spread = availableWidth / 2; 
+            
+            calculatePositions(node.left, depth + 1, x - spread, spread);
+            calculatePositions(node.right, depth + 1, x + spread, spread);
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (!tree.root) {
+                ctx.fillStyle = "#64748b";
+                ctx.font = "14px JetBrains Mono";
+                ctx.textAlign = "center";
+                ctx.fillText("Empty Tree. Insert values to visualize.", canvas.width/2, canvas.height/2);
+                return;
+            }
+
+            const initialSpread = Math.min(canvas.width / 2, 300);
+            calculatePositions(tree.root, 1, canvas.width / 2, initialSpread);
+
+            ctx.save();
+            ctx.translate(offsetX, offsetY);
+
+            drawConnections(tree.root);
+            
+            drawNodes(tree.root);
+
+            ctx.restore();
+            
+            document.getElementById('treeHeight').innerText = tree.getHeight();
+            document.getElementById('nodeCount').innerText = tree.count;
+        }
+
+        function drawConnections(node) {
+            if (!node) return;
+
+            ctx.strokeStyle = "#475569";
+            ctx.lineWidth = 2;
+
+            if (node.left) {
+                ctx.beginPath();
+                ctx.moveTo(node.x, node.y);
+                ctx.lineTo(node.left.x, node.left.y);
+                ctx.stroke();
+                drawConnections(node.left);
+            }
+            if (node.right) {
+                ctx.beginPath();
+                ctx.moveTo(node.x, node.y);
+                ctx.lineTo(node.right.x, node.right.y);
+                ctx.stroke();
+                drawConnections(node.right);
+            }
+        }
+
+        function drawNodes(node) {
+            if (!node) return;
+
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, NODE_RADIUS, 0, Math.PI * 2);
+            
+            if (targetNode === node) {
+                ctx.fillStyle = "#10b981";
+                ctx.shadowColor = "#10b981";
+                ctx.shadowBlur = 15;
+            } else if (highlightedNodes.includes(node)) {
+                ctx.fillStyle = "#eab308";
+                ctx.shadowBlur = 0;
+            } else {
+                ctx.fillStyle = "#3b82f6";
+                ctx.shadowColor = "#3b82f6";
+                ctx.shadowBlur = 5;
+            }
+            
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            ctx.strokeStyle = "#1e293b";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "bold 14px JetBrains Mono";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(node.value, node.x, node.y);
+
+            drawNodes(node.left);
+            drawNodes(node.right);
+        }
+
+        function setStatus(msg, type='normal') {
+            const el = document.getElementById('statusMessage');
+            el.innerHTML = msg;
+            if(type === 'error') el.className = "status-box error";
+            else if(type === 'success') el.className = "status-box success";
+            else el.className = "status-box";
+        }
+
+        function animatePath(path, finalNodeIsTarget = true) {
+            highlightedNodes = [];
+            targetNode = null;
+            let i = 0;
+
+            function step() {
+                if (i < path.length) {
+                    highlightedNodes = [path[i]];
+                    draw();
+                    
+                    if(i === 0) setStatus(Starting at Root: ${path[i].value});
+                    else {
+                        const prev = path[i-1];
+                        const curr = path[i];
+                        const dir = curr.value < prev.value ? "Left" : "Right";
+                        setStatus(Moved ${dir} to ${curr.value});
+                    }
+
+                    i++;
+                    setTimeout(step, 600);
+                } else {
+                    highlightedNodes = [];
+                    if(finalNodeIsTarget) {
+                        targetNode = path[path.length - 1];
+                        setStatus(Done. Node: ${targetNode.value}, 'success');
+                    } else {
+                        setStatus(Finished path., 'success');
+                    }
+                    draw();
+                    
+                    setTimeout(() => {
+                        targetNode = null;
+                        draw();
+                    }, 2000);
+                }
+            }
+            step();
+        }
+
+        function insertNode() {
+            const valInput = document.getElementById('nodeValue');
+            const val = parseInt(valInput.value);
+            
+            if (isNaN(val)) {
+                setStatus("Please enter a valid number.", "error");
+                return;
+            }
+
+            if (val > 999 || val < -999) {
+                setStatus("Please use numbers between -999 and 999 for best visibility.", "error");
+                return;
+            }
+
+            const result = tree.insert(val);
+            if (result.success) {
+                setStatus(Inserting ${val}...);
+                animatePath(result.path);
+                valInput.value = '';
+                valInput.focus();
+            } else {
+                setStatus(Value ${val} already exists in the tree., "error");
+                animatePath(result.path, false);
+            }
+        }
+
+        function searchNode() {
+            const valInput = document.getElementById('searchValue');
+            const val = parseInt(valInput.value);
+            
+            if (isNaN(val)) return;
+
+            const result = tree.find(val);
+            if(result.found) {
+                setStatus(Searching for ${val}... Found!, 'success');
+                animatePath(result.path);
+            } else {
+                setStatus(Searching for ${val}... Not found., 'error');
+                animatePath(result.path, false);
+            }
+        }
+
+        function generateRandom() {
+            clearTree();
+            const count = 7;
+            let delay = 0;
+            
+            setStatus("Generating random tree...");
+            
+            for(let i=0; i<count; i++) {
+                const num = Math.floor(Math.random() * 100);
+                tree.insert(num);
+            }
+            draw();
+            setStatus(Generated ${count} random nodes., 'success');
+        }
+
+        function clearTree() {
+            tree = new BinarySearchTree();
+            offsetX = 0;
+            offsetY = 50;
+            highlightedNodes = [];
+            targetNode = null;
+            document.getElementById('traversalOutput').innerText = "...";
+            draw();
+            setStatus("Tree cleared.");
+        }
+
+        function traverse(type) {
+            if(!tree.root) return;
+            
+            let result = [];
+            let name = "";
+            
+            switch(type) {
+                case 'inorder':
+                    result = tree.dfsInOrder();
+                    name = "In-Order (Sorted)";
+                    break;
+                case 'preorder':
+                    result = tree.dfsPreOrder();
+                    name = "Pre-Order";
+                    break;
+                case 'postorder':
+                    result = tree.dfsPostOrder();
+                    name = "Post-Order";
+                    break;
+                case 'bfs':
+                    result = tree.bfs();
+                    name = "BFS (Level Order)";
+                    break;
+            }
+            
+            document.getElementById('traversalOutput').innerText = result.join(' -> ');
+            setStatus(${name} Traversal complete.);
+        }
+
+        container.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startX = e.clientX - offsetX;
+            startY = e.clientY - offsetY;
+            container.style.cursor = 'grabbing';
+        });
+
+        window.addEventListener('mouseup', () => {
+            isDragging = false;
+            container.style.cursor = 'move';
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            offsetX = e.clientX - startX;
+            offsetY = e.clientY - startY;
+            draw();
+        });
+
+        tree.insert(50);
+        tree.insert(30);
+        tree.insert(70);
+        tree.insert(20);
+        tree.insert(40);
+        draw();
+
+    </script>
+</body>
+</html>
